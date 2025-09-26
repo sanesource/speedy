@@ -10,7 +10,7 @@ export function getSocketClient() {
   if (!socket) {
     const origin = process.env.NEXT_PUBLIC_APP_ORIGIN || window.location.origin;
     socket = io(origin, {
-      path: "/api/socket",
+      path: "/socket",
       autoConnect: true,
     });
   }

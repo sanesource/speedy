@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "./mongodb.js";
 
 const ROOM_ID_LENGTH = 6;
 const MAX_CAPACITY = 8;

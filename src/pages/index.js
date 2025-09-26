@@ -5,9 +5,9 @@ import {
   RoomLobby,
   TestProgress,
   ResultsTable,
-} from "@/components";
-import { getSocketClient } from "@/lib/socketClient";
-import { clearSession, loadSession, saveSession } from "@/lib/session";
+} from "../components/index.js";
+import { getSocketClient } from "../lib/socketClient.js";
+import { clearSession, loadSession, saveSession } from "../lib/session.js";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

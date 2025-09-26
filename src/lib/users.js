@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "./mongodb.js";
 
 const inMemorySessions = global.__SPEEDY_SESSION_STORE ?? new Map();
 if (process.env.NODE_ENV === "development") {
