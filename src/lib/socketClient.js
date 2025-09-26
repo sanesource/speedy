@@ -12,7 +12,6 @@ export function getSocketClient() {
     socket = io(origin, {
       path: "/api/socket",
       autoConnect: true,
-      transports: ["websocket"],
     });
   }
 
