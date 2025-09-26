@@ -165,7 +165,9 @@ export async function addParticipant(roomId, participant) {
     );
 
     if (!value) {
-      return null;
+      const error = new Error("Room not found");
+      error.code = "ROOM_NOT_FOUND";
+      throw error;
     }
 
     const status = determineLobbyStatus(value.participants, value.status);

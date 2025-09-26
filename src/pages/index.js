@@ -385,10 +385,15 @@ export default function Home() {
       }));
     });
     socket.on("room-closed", handleRoomClosed);
-    socket.on("error", (payload) =>
-      setError(payload.message ?? "Unexpected error")
-    );
-    socket.on("room-full", () => setError("Room is full"));
+    socket.on("error", (payload) => {
+      setIsCreating(false);
+      setIsJoiningRoom(false);
+      setError(payload.message ?? "Unexpected error");
+    });
+    socket.on("room-full", () => {
+      setIsJoiningRoom(false);
+      setError("Room is full");
+    });
 
     return () => {
       clearProgressTimer();
@@ -410,6 +415,8 @@ export default function Home() {
     clearProgressTimer,
     roomState.participants,
     endSimulation,
+    isCreating,
+    isJoiningRoom,
   ]);
 
   useEffect(() => {
@@ -474,9 +481,13 @@ export default function Home() {
       return;
     }
 
+    if (isCreating) {
+      return;
+    }
+
     setIsCreating(true);
     socket.emit("create-room", { username });
-  }, [socket, username]);
+  }, [socket, username, isCreating]);
 
   const handleJoinRoom = useCallback(() => {
     if (!socket) {
@@ -492,9 +503,13 @@ export default function Home() {
       return;
     }
 
+    if (isJoiningRoom) {
+      return;
+    }
+
     setIsJoiningRoom(true);
     socket.emit("join-room", { roomId: roomCode, username });
-  }, [socket, username, roomCode]);
+  }, [socket, username, roomCode, isJoiningRoom]);
 
   const handleStartTest = useCallback(() => {
     if (!socket) {
@@ -572,6 +587,8 @@ export default function Home() {
             onJoinRoom={handleJoinRoom}
             isJoinDisabled={!roomCode}
             error={error}
+            isCreating={isCreating}
+            isJoining={isJoiningRoom}
           />
         ) : null}
 

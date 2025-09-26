@@ -101,6 +101,8 @@ function createSocketServer(server) {
       } catch (error) {
         if (error.code === "ROOM_FULL") {
           socket.emit("room-full");
+        } else if (error.code === "ROOM_NOT_FOUND") {
+          socket.emit("error", { message: "Room not found" });
         } else {
           socket.emit("error", { message: error.message });
         }
