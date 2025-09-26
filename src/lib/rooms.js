@@ -164,6 +164,8 @@ export async function addParticipant(roomId, participant) {
       { returnDocument: "after" }
     );
 
+    console.log("DEBUG: value", value);
+
     if (!value) {
       const error = new Error("Room not found");
       error.code = "ROOM_NOT_FOUND";
