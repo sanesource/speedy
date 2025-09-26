@@ -154,7 +154,7 @@ export async function addParticipant(roomId, participant) {
       isActive: true,
     };
 
-    const roomUpdateResult = await db.collection("rooms").findOneAndUpdate(
+    const value = await db.collection("rooms").findOneAndUpdate(
       { roomId },
       {
         $push: {
@@ -163,9 +163,6 @@ export async function addParticipant(roomId, participant) {
       },
       { returnDocument: "after" }
     );
-    const value = roomUpdateResult.value;
-
-    console.log("DEBUG: roomUpdateResult", roomUpdateResult);
 
     if (!value) {
       const error = new Error("Room not found");
