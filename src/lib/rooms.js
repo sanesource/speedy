@@ -112,7 +112,7 @@ export async function updateRoom(roomId, updates) {
   const db = await getDb();
 
   if (db) {
-    const { value } = await db
+    const value = await db
       .collection("rooms")
       .findOneAndUpdate(
         { roomId },
@@ -269,7 +269,7 @@ export async function storeTestResult(roomId, result) {
       }
     );
 
-    const { value } = await db.collection("rooms").findOneAndUpdate(
+    const value = await db.collection("rooms").findOneAndUpdate(
       { roomId },
       {
         $push: {
@@ -306,7 +306,7 @@ export async function resetTestResults(roomId) {
   const db = await getDb();
 
   if (db) {
-    const { value } = await db.collection("rooms").findOneAndUpdate(
+    const value = await db.collection("rooms").findOneAndUpdate(
       { roomId },
       {
         $set: {
@@ -358,7 +358,7 @@ export async function setParticipantActivity(
       setUpdate["participants.$.username"] = username;
     }
 
-    const { value } = await db.collection("rooms").findOneAndUpdate(
+    const value = await db.collection("rooms").findOneAndUpdate(
       { roomId, "participants.userId": userId },
       {
         $set: setUpdate,
