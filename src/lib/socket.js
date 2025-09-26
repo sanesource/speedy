@@ -7,21 +7,21 @@ import {
   beginSpeedTest,
   completeSpeedTest,
   resetTestResults,
-} from "@/lib/rooms";
+} from "./rooms.js";
 import {
   assignRoomToSession,
   clearSession,
   generateUserId,
   getSessionBySocket,
   upsertSession,
-} from "@/lib/users";
-import { isMongoConfigured } from "@/lib/mongodb";
+} from "./users.js";
+import { isMongoConfigured } from "./mongodb.js";
 
 let ioInstance;
 
 function createSocketServer(server) {
   ioInstance = new Server(server, {
-    path: "/api/socket",
+    path: "/socket",
     cors: {
       origin: process.env.NEXT_PUBLIC_APP_ORIGIN || "*",
     },

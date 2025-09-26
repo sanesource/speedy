@@ -1,4 +1,4 @@
-import ParticipantList from "@/components/ParticipantList";
+import ParticipantList from "./ParticipantList.js";
 
 const statusCopy = {
   waiting: "Waiting for participants",
