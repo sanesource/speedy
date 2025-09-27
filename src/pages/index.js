@@ -415,53 +415,59 @@ export default function Home() {
   useEffect(() => {
     if (view !== "testing") {
       clearProgressTimer();
+      setRemainingSeconds(TEST_DURATION_SECONDS);
+      setTestProgress({});
       return;
     }
 
+    // Initialize progress for all participants (including admin)
+    const participants = roomState.participants || [];
+    const offsets = {};
+    participants.forEach((p) => {
+      offsets[p.userId] = Math.random() * 0.05;
+    });
+    offsets[roomState.userId] = 0; // Ensure admin offset is 0
+
+    progressOffsetsRef.current = offsets;
+    testStartTimeRef.current = Date.now();
+    setRemainingSeconds(TEST_DURATION_SECONDS);
+
     clearProgressTimer();
 
-    const tick = () => {
-      if (!testStartTimeRef.current) {
-        progressTimer.current = setTimeout(tick, 800);
-        return;
-      }
-
+    progressTimer.current = setInterval(() => {
       const elapsed = Date.now() - testStartTimeRef.current;
-      const normalizedTime = Math.min(1, elapsed / TEST_DURATION_MS);
+      const normalized = Math.min(1, elapsed / TEST_DURATION_MS);
+      const secondsLeft = Math.max(
+        0,
+        Math.ceil((TEST_DURATION_MS - elapsed) / 1000)
+      );
+      setRemainingSeconds(secondsLeft);
 
       setTestProgress((prev) => {
         const updated = { ...prev };
-        const currentParticipants = participantsRef.current;
-        const offsets = progressOffsetsRef.current;
-
-        currentParticipants.forEach((participant) => {
-          if (!participant?.userId) {
-            return;
-          }
-          const offset = offsets[participant.userId] ?? 0;
-          const current = updated[participant.userId] ?? DEFAULT_PROGRESS;
-          const simulatedValue = Math.min(1, normalizedTime + offset);
-          const nextValue = Math.max(current.value, simulatedValue);
-          const metric = progressMetric(nextValue);
-
+        (roomState.participants || []).forEach((participant) => {
+          const offset = progressOffsetsRef.current[participant.userId] ?? 0;
+          const prevValue = updated[participant.userId]?.value ?? 0;
+          const value = clampProgress(Math.max(prevValue, normalized + offset));
           updated[participant.userId] = {
-            value: clampProgress(nextValue),
-            metric,
+            value,
+            metric: progressMetric(value),
           };
         });
-
         return updated;
       });
 
-      progressTimer.current = setTimeout(tick, 800);
-    };
-
-    progressTimer.current = setTimeout(tick, 800);
+      // Stop timer at end
+      if (elapsed >= TEST_DURATION_MS) {
+        clearProgressTimer();
+        setRemainingSeconds(0);
+      }
+    }, 1000);
 
     return () => {
       clearProgressTimer();
     };
-  }, [view, clearProgressTimer]);
+  }, [view, roomState.participants, roomState.userId]);
 
   const handleCreateRoom = useCallback(() => {
     if (!socket) {
