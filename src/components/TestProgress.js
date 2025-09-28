@@ -88,7 +88,7 @@ export default function TestProgress({
       </div>
 
       <footer className="text-center text-[10px] text-gray-500 dark:text-gray-400 sm:text-xs">
-        We'll display comparative results as soon as the test completes.
+        We&apos;ll display comparative results as soon as the test completes.
       </footer>
     </div>
   );
