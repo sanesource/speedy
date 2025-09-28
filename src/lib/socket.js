@@ -7,6 +7,7 @@ import {
   beginSpeedTest,
   completeSpeedTest,
   resetTestResults,
+  getRoom,
 } from "./rooms.js";
 import {
   assignRoomToSession,
@@ -16,6 +17,7 @@ import {
   upsertSession,
 } from "./users.js";
 import { isMongoConfigured } from "./mongodb.js";
+import { runServerSpeedTest } from "./speedtest.js";
 
 let ioInstance;
 
@@ -126,28 +128,52 @@ function createSocketServer(server) {
 
     socket.on("start-speed-test", async ({ roomId }) => {
       const room = await beginSpeedTest(roomId);
+      const participants = room?.participants ?? [];
+
       ioInstance.to(roomId).emit("test-started", {
         status: room?.status ?? "testing",
-        participants: room?.participants ?? [],
+        participants,
       });
+
+      (async () => {
+        try {
+          const metrics = await runServerSpeedTest();
+          let latestRoom = await getRoom(roomId);
+
+          for (const participant of participants) {
+            const payload = {
+              ...metrics,
+              userId: participant.userId,
+              testedAt: new Date().toISOString(),
+            };
+
+            latestRoom = await storeTestResult(roomId, payload);
+            ioInstance.to(roomId).emit("test-completed", payload);
+          }
+
+          if (
+            latestRoom &&
+            latestRoom.testResults &&
+            latestRoom.participants &&
+            latestRoom.testResults.length === latestRoom.participants.length
+          ) {
+            const updatedRoom = await completeSpeedTest(roomId);
+            ioInstance.to(roomId).emit("all-results-ready", {
+              results: updatedRoom.testResults,
+              roomId,
+              isPersisted: isMongoConfigured(),
+            });
+          }
+        } catch (error) {
+          ioInstance.to(roomId).emit("error", {
+            message: error?.message ?? "Failed to run speed test",
+          });
+        }
+      })();
     });
 
     socket.on("test-progress", ({ roomId, ...payload }) => {
       socket.to(roomId).emit("test-progress", payload);
-    });
-
-    socket.on("test-completed", async ({ roomId, ...result }) => {
-      const room = await storeTestResult(roomId, result);
-      ioInstance.to(roomId).emit("test-completed", result);
-
-      if (room && room.testResults.length === room.participants.length) {
-        const updatedRoom = await completeSpeedTest(roomId);
-        ioInstance.to(roomId).emit("all-results-ready", {
-          results: updatedRoom.testResults,
-          roomId,
-          isPersisted: isMongoConfigured(),
-        });
-      }
     });
 
     socket.on("restart-test", async ({ roomId }) => {

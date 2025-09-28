@@ -51,36 +51,6 @@ function normalizeRoomUpdate(payload) {
   };
 }
 
-function randomBetween(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function progressMetric(value) {
-  if (value < 0.25) {
-    return "download";
-  }
-  if (value < 0.5) {
-    return "upload";
-  }
-  if (value < 0.75) {
-    return "latency";
-  }
-  return "ping";
-}
-
-function clampProgress(value) {
-  if (Number.isNaN(value)) {
-    return 0;
-  }
-  if (value <= 0) {
-    return 0;
-  }
-  if (value >= 1) {
-    return 1;
-  }
-  return value;
-}
-
 export default function Home() {
   const [view, setView] = useState("landing");
   const [username, setUsername] = useState("");
@@ -94,7 +64,6 @@ export default function Home() {
     participants: [],
     maxCapacity: 8,
   });
-  const [testProgress, setTestProgress] = useState({});
   const [results, setResults] = useState([]);
   const progressTimer = useRef(null);
   const [isPersisted, setIsPersisted] = useState(true);
@@ -106,10 +75,10 @@ export default function Home() {
   const [remainingSeconds, setRemainingSeconds] = useState(
     TEST_DURATION_SECONDS
   );
+  const [testStartTime, setTestStartTime] = useState(null);
   const participantsRef = useRef([]);
-  const simulationTimerRef = useRef(null);
   const testStartTimeRef = useRef(null);
-  const progressOffsetsRef = useRef({});
+  const resultsRef = useRef([]);
 
   const clearProgressTimer = useCallback(() => {
     if (progressTimer.current) {
@@ -119,15 +88,17 @@ export default function Home() {
   }, []);
 
   const endSimulation = useCallback(() => {
-    if (simulationTimerRef.current) {
-      clearTimeout(simulationTimerRef.current);
-      simulationTimerRef.current = null;
-    }
-
     clearProgressTimer();
     setRemainingSeconds(TEST_DURATION_SECONDS);
     testStartTimeRef.current = null;
-    progressOffsetsRef.current = {};
+    setTestStartTime(null);
+  }, [clearProgressTimer]);
+
+  const resetTestState = useCallback(() => {
+    clearProgressTimer();
+    setRemainingSeconds(TEST_DURATION_SECONDS);
+    testStartTimeRef.current = null;
+    setTestStartTime(null);
   }, [clearProgressTimer]);
 
   const socket = useMemo(() => getSocketClient(), []);
@@ -155,6 +126,84 @@ export default function Home() {
   useEffect(() => {
     participantsRef.current = roomState.participants;
   }, [roomState.participants]);
+
+  useEffect(() => {
+    resultsRef.current = results;
+  }, [results]);
+
+  // Handle showing results when they arrive and timer is done
+  useEffect(() => {
+    if (view === "testing" && results.length > 0 && remainingSeconds <= 0) {
+      setView("results");
+      setRoomState((prev) => ({
+        ...prev,
+        status: "results",
+      }));
+      saveSession({
+        roomId: roomState.roomId,
+        userId: roomState.userId,
+        username,
+        status: "results",
+      });
+    }
+  }, [
+    view,
+    results.length,
+    remainingSeconds,
+    roomState.roomId,
+    roomState.userId,
+    username,
+  ]);
+
+  // Start timer when view changes to testing
+  useEffect(() => {
+    if (view === "testing" && testStartTime) {
+      // Clear any existing timer
+      if (progressTimer.current) {
+        clearInterval(progressTimer.current);
+      }
+
+      progressTimer.current = setInterval(() => {
+        if (!testStartTimeRef.current) {
+          return;
+        }
+        const elapsed = Date.now() - testStartTimeRef.current;
+        const secondsRemaining = Math.max(
+          0,
+          Math.ceil((TEST_DURATION_MS - elapsed) / 1000)
+        );
+
+        setRemainingSeconds(secondsRemaining);
+
+        // When timer reaches zero, show results if we have them
+        if (secondsRemaining <= 0) {
+          clearProgressTimer();
+
+          // If we have results, show them
+          if (resultsRef.current.length > 0) {
+            setView("results");
+            setRoomState((prev) => ({
+              ...prev,
+              status: "results",
+            }));
+            saveSession({
+              roomId: roomState.roomId,
+              userId: roomState.userId,
+              username,
+              status: "results",
+            });
+          }
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (view !== "testing" && progressTimer.current) {
+        clearInterval(progressTimer.current);
+        progressTimer.current = null;
+      }
+    };
+  }, [view, testStartTime, roomState.roomId, roomState.userId, username]);
 
   useEffect(() => {
     if (!socket) {
@@ -230,80 +279,11 @@ export default function Home() {
         status: payload?.status ?? "testing",
         participants: participantsList,
       }));
-      setTestProgress({});
-      const offsets = participantsList.reduce((accumulator, participant) => {
-        accumulator[participant.userId] = Math.random() * 0.05;
-        return accumulator;
-      }, {});
-      offsets[roomState.userId] = 0;
-      progressOffsetsRef.current = offsets;
-      testStartTimeRef.current = Date.now();
-      clearProgressTimer();
+
+      const startTime = Date.now();
+      testStartTimeRef.current = startTime;
+      setTestStartTime(startTime);
       setRemainingSeconds(TEST_DURATION_SECONDS);
-
-      const completeSimulation = () => {
-        const simulatedResults = participantsList.map((participant) => ({
-          userId: participant.userId,
-          username: participant.username,
-          downloadSpeed: randomBetween(100, 400),
-          uploadSpeed: randomBetween(50, 200),
-          latency: randomBetween(10, 60),
-          ping: randomBetween(5, 30),
-          testedAt: new Date().toISOString(),
-        }));
-        endSimulation();
-        setResults(simulatedResults);
-        setView("results");
-        setRoomState((prev) => ({
-          ...prev,
-          status: "results",
-        }));
-      };
-
-      simulationTimerRef.current = setTimeout(
-        completeSimulation,
-        TEST_DURATION_MS
-      );
-
-      if (progressTimer.current) {
-        clearInterval(progressTimer.current);
-      }
-      progressTimer.current = setInterval(() => {
-        if (!testStartTimeRef.current) {
-          return;
-        }
-        const elapsed = Date.now() - testStartTimeRef.current;
-        const normalizedTime = Math.min(1, elapsed / TEST_DURATION_MS);
-        const secondsRemaining = Math.max(
-          0,
-          Math.ceil((TEST_DURATION_MS - elapsed) / 1000)
-        );
-        setRemainingSeconds(secondsRemaining);
-
-        setTestProgress((prev) => {
-          const updated = { ...prev };
-          const currentParticipants = participantsRef.current;
-          const offsetsMap = progressOffsetsRef.current;
-
-          currentParticipants.forEach((participant) => {
-            if (!participant?.userId) {
-              return;
-            }
-            const offset = offsetsMap[participant.userId] ?? 0;
-            const current = updated[participant.userId] ?? DEFAULT_PROGRESS;
-            const simulatedValue = Math.min(1, normalizedTime + offset);
-            const nextValue = Math.max(current.value, simulatedValue);
-            const metric = progressMetric(nextValue);
-
-            updated[participant.userId] = {
-              value: clampProgress(nextValue),
-              metric,
-            };
-          });
-
-          return updated;
-        });
-      }, 1000);
 
       saveSession({
         roomId: roomState.roomId,
@@ -315,17 +295,10 @@ export default function Home() {
     }
 
     function handleTestProgress(payload) {
-      setTestProgress((prev) => ({
-        ...prev,
-        [payload.userId]: {
-          value: payload.progress ?? 0,
-          metric: payload.currentMetric ?? DEFAULT_PROGRESS.metric,
-        },
-      }));
+      // this handler no longer needs to update state after removing testProgress
     }
 
     function handleTestCompleted(payload) {
-      endSimulation();
       setResults((prev) => {
         const filtered = prev.filter(
           (entry) => entry.userId !== payload.userId
@@ -335,19 +308,8 @@ export default function Home() {
     }
 
     function handleAllResults(payload) {
-      endSimulation();
       setResults(payload.results ?? []);
-      setView("results");
-      setRoomState((prev) => ({
-        ...prev,
-        status: "results",
-      }));
-      saveSession({
-        roomId: roomState.roomId,
-        userId: roomState.userId,
-        username,
-        status: "results",
-      });
+      // Results will be shown automatically by useEffect when timer completes
     }
 
     function handleRoomClosed() {
@@ -363,7 +325,6 @@ export default function Home() {
         maxCapacity: 8,
       });
       setResults([]);
-      setTestProgress({});
       clearSession();
       setIsLeaving(false);
     }
@@ -378,7 +339,6 @@ export default function Home() {
     socket.on("test-restarted", () => {
       setView("lobby");
       setResults([]);
-      setTestProgress({});
       setRoomState((prev) => ({
         ...prev,
         status: "waiting",
@@ -418,63 +378,6 @@ export default function Home() {
     isCreating,
     isJoiningRoom,
   ]);
-
-  useEffect(() => {
-    if (view !== "testing") {
-      clearProgressTimer();
-      setRemainingSeconds(TEST_DURATION_SECONDS);
-      setTestProgress({});
-      return;
-    }
-
-    // Initialize progress for all participants (including admin)
-    const participants = roomState.participants || [];
-    const offsets = {};
-    participants.forEach((p) => {
-      offsets[p.userId] = Math.random() * 0.05;
-    });
-    offsets[roomState.userId] = 0; // Ensure admin offset is 0
-
-    progressOffsetsRef.current = offsets;
-    testStartTimeRef.current = Date.now();
-    setRemainingSeconds(TEST_DURATION_SECONDS);
-
-    clearProgressTimer();
-
-    progressTimer.current = setInterval(() => {
-      const elapsed = Date.now() - testStartTimeRef.current;
-      const normalized = Math.min(1, elapsed / TEST_DURATION_MS);
-      const secondsLeft = Math.max(
-        0,
-        Math.ceil((TEST_DURATION_MS - elapsed) / 1000)
-      );
-      setRemainingSeconds(secondsLeft);
-
-      setTestProgress((prev) => {
-        const updated = { ...prev };
-        (roomState.participants || []).forEach((participant) => {
-          const offset = progressOffsetsRef.current[participant.userId] ?? 0;
-          const prevValue = updated[participant.userId]?.value ?? 0;
-          const value = clampProgress(Math.max(prevValue, normalized + offset));
-          updated[participant.userId] = {
-            value,
-            metric: progressMetric(value),
-          };
-        });
-        return updated;
-      });
-
-      // Stop timer at end
-      if (elapsed >= TEST_DURATION_MS) {
-        clearProgressTimer();
-        setRemainingSeconds(0);
-      }
-    }, 1000);
-
-    return () => {
-      clearProgressTimer();
-    };
-  }, [view, roomState.participants, roomState.userId]);
 
   const handleCreateRoom = useCallback(() => {
     if (!socket) {
@@ -557,7 +460,6 @@ export default function Home() {
     setIsRestarting(true);
     socket.emit("restart-test", { roomId: roomState.roomId });
     setResults([]);
-    setTestProgress({});
     endSimulation();
     setView("lobby");
     setRoomState((prev) => ({
@@ -617,7 +519,6 @@ export default function Home() {
         {view === "testing" ? (
           <TestProgress
             participants={roomState.participants}
-            progressByUser={testProgress}
             statusMessage="Collecting real-time metrics"
             remainingSeconds={remainingSeconds}
           />
