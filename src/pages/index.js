@@ -379,6 +379,10 @@ export default function Home() {
       setIsJoiningRoom(false);
       setError("Room is full");
     });
+    socket.on("room-locked", () => {
+      setIsJoiningRoom(false);
+      setError("Room is locked while testing");
+    });
 
     return () => {
       clearProgressTimer();
@@ -391,6 +395,7 @@ export default function Home() {
       socket.off("all-results-ready", handleAllResults);
       socket.off("test-restarted");
       socket.off("room-closed", handleRoomClosed);
+      socket.off("room-locked");
     };
   }, [
     socket,

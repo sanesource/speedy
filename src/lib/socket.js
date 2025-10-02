@@ -69,8 +69,9 @@ function createSocketServer(server) {
     });
 
     socket.on("join-room", async ({ roomId, username }) => {
+      let userId;
       try {
-        const userId = generateUserId();
+        userId = generateUserId();
         await upsertSession({
           userId,
           username,
@@ -103,6 +104,12 @@ function createSocketServer(server) {
       } catch (error) {
         if (error.code === "ROOM_FULL") {
           socket.emit("room-full");
+        } else if (error.code === "ROOM_LOCKED") {
+          socket.emit("room-locked");
+          // rollback session association since join failed
+          if (userId) {
+            await clearSession(userId);
+          }
         } else if (error.code === "ROOM_NOT_FOUND") {
           socket.emit("error", { message: "Room not found" });
         } else {

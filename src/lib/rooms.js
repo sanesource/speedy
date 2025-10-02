@@ -142,6 +142,12 @@ export async function addParticipant(roomId, participant) {
       throw new Error("Room not found");
     }
 
+    if (room.status === "testing") {
+      const error = new Error("Room is locked while testing");
+      error.code = "ROOM_LOCKED";
+      throw error;
+    }
+
     if (room.participants.length >= room.maxCapacity) {
       const error = new Error("Room is full");
       error.code = "ROOM_FULL";
@@ -182,6 +188,12 @@ export async function addParticipant(roomId, participant) {
   const room = inMemoryRooms.get(roomId);
   if (!room) {
     throw new Error("Room not found");
+  }
+
+  if (room.status === "testing") {
+    const error = new Error("Room is locked while testing");
+    error.code = "ROOM_LOCKED";
+    throw error;
   }
 
   if (room.participants.length >= room.maxCapacity) {
