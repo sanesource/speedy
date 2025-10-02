@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import {
   LandingView,
   RoomLobby,
@@ -10,13 +10,13 @@ import { getSocketClient } from "../lib/socketClient.js";
 import { clearSession, loadSession, saveSession } from "../lib/session.js";
 import { runClientSpeedTest } from "../lib/clientSpeedtest.js";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
@@ -512,7 +512,7 @@ export default function Home() {
 
   return (
     <div
-      className={`${geistSans.className} ${geistMono.className} min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 p-6 font-sans dark:from-gray-950 dark:via-gray-900 dark:to-gray-950`}
+      className={`${inter.className} ${jetbrainsMono.className} min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 p-6 font-sans dark:from-gray-950 dark:via-gray-900 dark:to-gray-950`}
     >
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         {view === "landing" ? (
@@ -568,6 +568,39 @@ export default function Home() {
           />
         ) : null}
       </main>
+
+      {/* Desktop: sidebar star button */}
+      <a
+        href="https://github.com/sanesource/speedy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group fixed right-4 top-1/2 hidden -translate-y-1/2 transform items-center gap-2 rounded-none bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800 md:flex"
+        aria-label="Star speedy on GitHub"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="h-4 w-4"
+          aria-hidden
+        >
+          <path d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.46 2.46a.75.75 0 0 0 .424.214l3.407.494a.75.75 0 0 1 .416 1.277l-2.463 2.4a.75.75 0 0 0-.216.664l.581 3.39a.75.75 0 0 1-1.088.791l-3.045-1.6a.75.75 0 0 0-.698 0l-3.045 1.6a.75.75 0 0 1-1.088-.79l.58-3.392a.75.75 0 0 0-.216-.663L4.272 7.944a.75.75 0 0 1 .416-1.277l3.407-.494a.75.75 0 0 0 .424-.214l2.96-2.46Z" />
+        </svg>
+        <span>Star on GitHub</span>
+      </a>
+
+      {/* Mobile: footer star button */}
+      <div className="fixed inset-x-0 bottom-4 flex justify-center md:hidden">
+        <a
+          href="https://github.com/sanesource/speedy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-none bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800"
+          aria-label="Star speedy on GitHub"
+        >
+          ⭐ Star on GitHub
+        </a>
+      </div>
     </div>
   );
 }
