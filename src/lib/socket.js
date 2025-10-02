@@ -17,7 +17,7 @@ import {
   upsertSession,
 } from "./users.js";
 import { isMongoConfigured } from "./mongodb.js";
-import { runServerSpeedTest } from "./speedtest.js";
+// Server-side speed test is no longer used; clients report their own results
 
 let ioInstance;
 
@@ -134,22 +134,34 @@ function createSocketServer(server) {
         status: room?.status ?? "testing",
         participants,
       });
+    });
 
-      (async () => {
+    // Clients submit their results via this event
+    socket.on(
+      "client-test-completed",
+      async ({
+        roomId,
+        userId,
+        downloadSpeed,
+        uploadSpeed,
+        latency,
+        ping,
+        jitter,
+        testedAt,
+      }) => {
         try {
-          const metrics = await runServerSpeedTest();
-          let latestRoom = await getRoom(roomId);
+          const payload = {
+            downloadSpeed: Number(downloadSpeed) || 0,
+            uploadSpeed: Number(uploadSpeed) || 0,
+            latency: Number(latency) || 0,
+            ping: Number(ping) || Number(latency) || 0,
+            jitter: Number(jitter) || 0,
+            userId,
+            testedAt: testedAt ? new Date(testedAt) : new Date(),
+          };
 
-          for (const participant of participants) {
-            const payload = {
-              ...metrics,
-              userId: participant.userId,
-              testedAt: new Date().toISOString(),
-            };
-
-            latestRoom = await storeTestResult(roomId, payload);
-            ioInstance.to(roomId).emit("test-completed", payload);
-          }
+          let latestRoom = await storeTestResult(roomId, payload);
+          ioInstance.to(roomId).emit("test-completed", payload);
 
           if (
             latestRoom &&
@@ -166,11 +178,11 @@ function createSocketServer(server) {
           }
         } catch (error) {
           ioInstance.to(roomId).emit("error", {
-            message: error?.message ?? "Failed to run speed test",
+            message: error?.message ?? "Failed to record test result",
           });
         }
-      })();
-    });
+      }
+    );
 
     socket.on("test-progress", ({ roomId, ...payload }) => {
       socket.to(roomId).emit("test-progress", payload);

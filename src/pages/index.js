@@ -8,6 +8,7 @@ import {
 } from "../components/index.js";
 import { getSocketClient } from "../lib/socketClient.js";
 import { clearSession, loadSession, saveSession } from "../lib/session.js";
+import { runClientSpeedTest } from "../lib/clientSpeedtest.js";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -284,6 +285,30 @@ export default function Home() {
       testStartTimeRef.current = startTime;
       setTestStartTime(startTime);
       setRemainingSeconds(TEST_DURATION_SECONDS);
+
+      // Kick off client-side speed test and report result when done
+      (async () => {
+        try {
+          const result = await runClientSpeedTest();
+          socket.emit("client-test-completed", {
+            roomId: roomState.roomId,
+            userId: roomState.userId,
+            ...result,
+          });
+        } catch (e) {
+          socket.emit("client-test-completed", {
+            roomId: roomState.roomId,
+            userId: roomState.userId,
+            downloadSpeed: 0,
+            uploadSpeed: 0,
+            latency: 0,
+            ping: 0,
+            jitter: 0,
+            testedAt: new Date().toISOString(),
+            error: e?.message ?? "client test failed",
+          });
+        }
+      })();
 
       saveSession({
         roomId: roomState.roomId,

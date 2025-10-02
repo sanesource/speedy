@@ -16,7 +16,6 @@ const columns = [
   { id: "username", label: "Participant" },
   { id: "downloadSpeed", label: "Download (Mbps)" },
   { id: "uploadSpeed", label: "Upload (Mbps)" },
-  { id: "latency", label: "Latency (ms)" },
   { id: "ping", label: "Ping (ms)" },
   { id: "testedAt", label: "Completed" },
 ];
@@ -159,9 +158,6 @@ export default function ResultsTable({
                     <span className="font-medium">
                       {result.uploadSpeed?.toFixed(1) ?? "—"}
                     </span>
-                  </td>
-                  <td className="px-2 py-2 text-xs text-gray-700 dark:text-gray-200 sm:px-4 sm:py-3 sm:text-sm">
-                    {result.latency?.toFixed(0) ?? "—"}
                   </td>
                   <td className="px-2 py-2 text-xs text-gray-700 dark:text-gray-200 sm:px-4 sm:py-3 sm:text-sm">
                     {result.ping?.toFixed(0) ?? "—"}
