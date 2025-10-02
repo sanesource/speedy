@@ -25,7 +25,7 @@ const DEFAULT_PROGRESS = {
   metric: "download",
 };
 
-const TEST_DURATION_MS = 45000;
+const TEST_DURATION_MS = 20000;
 const TEST_DURATION_SECONDS = Math.ceil(TEST_DURATION_MS / 1000);
 
 function randomUsername() {

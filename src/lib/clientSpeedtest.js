@@ -1,11 +1,11 @@
 const DEFAULT_TIMEOUT_MS = 15000;
 const DOWNLOAD_TARGETS = [
-  "https://speed.cloudflare.com/__down?bytes=20000000",
-  "https://speed.cloudflare.com/__down?bytes=10000000",
+  "https://speed.cloudflare.com/__down?bytes=200000000",
+  "https://speed.cloudflare.com/__down?bytes=100000000",
 ];
 const UPLOAD_TARGETS = [
-  { url: "https://speed.cloudflare.com/__up", bytes: 10000000 },
-  { url: "https://speed.cloudflare.com/__up", bytes: 5000000 },
+  { url: "https://speed.cloudflare.com/__up", bytes: 100000000 },
+  { url: "https://speed.cloudflare.com/__up", bytes: 50000000 },
 ];
 
 function withTimeout(promise, timeoutMs, label) {
@@ -73,11 +73,70 @@ async function fetchAndCountBytes(url, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return { bytes, seconds: elapsedSec };
 }
 
-async function measureDownload() {
+// Read a chunk with a timeout; resolves to { timeout: true } on timeout
+async function readWithTimeout(reader, timeoutMs) {
+  return Promise.race([
+    reader.read(),
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ timeout: true }), Math.max(0, timeoutMs))
+    ),
+  ]);
+}
+
+// Like fetchAndCountBytes but ensures total time does not exceed capMs.
+async function fetchAndCountBytesWithCap(url, capMs) {
+  const start = performance.now();
+  // Ensure the initial request itself cannot exceed the cap
+  const response = await withTimeout(
+    fetch(url, { cache: "no-store" }),
+    capMs,
+    "download"
+  );
+  const reader = response.body?.getReader?.();
+  if (!reader) {
+    const contentLength = Number(response.headers.get("content-length") || 0);
+    const elapsedSec = (performance.now() - start) / 1000;
+    return { bytes: contentLength, seconds: elapsedSec };
+  }
+  let bytes = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const elapsedMs = performance.now() - start;
+    const remainingMs = capMs - elapsedMs;
+    if (remainingMs <= 0) {
+      try {
+        await reader.cancel();
+      } catch (_) {
+        // ignore
+      }
+      break;
+    }
+    const result = await readWithTimeout(reader, remainingMs);
+    if (result && result.timeout) {
+      try {
+        await reader.cancel();
+      } catch (_) {
+        // ignore
+      }
+      break;
+    }
+    const { done, value } = result || {};
+    if (done) break;
+    if (value) bytes += value.byteLength;
+  }
+  const elapsedSec = (performance.now() - start) / 1000;
+  return { bytes, seconds: elapsedSec };
+}
+
+async function measureDownload(totalTimeoutMs = 10000) {
+  const startAll = performance.now();
   for (const target of DOWNLOAD_TARGETS) {
+    const remainingMs = totalTimeoutMs - (performance.now() - startAll);
+    if (remainingMs <= 0) break;
     try {
-      const { bytes, seconds } = await fetchAndCountBytes(
-        `${target}&cb=${Date.now()}`
+      const { bytes, seconds } = await fetchAndCountBytesWithCap(
+        `${target}&cb=${Date.now()}`,
+        remainingMs
       );
       if (seconds > 0 && bytes > 0) {
         const bits = bytes * 8;
@@ -90,9 +149,14 @@ async function measureDownload() {
   }
   // last resort: tiny file on same origin (very rough)
   try {
-    const { bytes, seconds } = await fetchAndCountBytes(
+    const remainingMs = Math.max(
+      0,
+      totalTimeoutMs - (performance.now() - startAll)
+    );
+    if (remainingMs <= 0) return { downloadMbps: 0 };
+    const { bytes, seconds } = await fetchAndCountBytesWithCap(
       `/file.svg?cb=${Date.now()}`,
-      5000
+      Math.min(5000, remainingMs)
     );
     const bits = bytes * 8;
     const mbps = seconds > 0 ? bits / seconds / 1_000_000 : 0;
@@ -123,8 +187,13 @@ async function postAndMeasureBytes(url, bytes, timeoutMs = DEFAULT_TIMEOUT_MS) {
       },
       body: payload,
       cache: "no-store",
-      // keepalive helps allow completion during page unloads, but not required
-      keepalive: true,
+      // Use no-cors to avoid preflight delays and CORS issues; response is opaque which is fine
+      mode: "no-cors",
+      // Large payloads are not compatible with keepalive limits (~64KB). Disable keepalive.
+      keepalive: false,
+      // Do not send credentials/cookies cross-origin
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
     }),
     timeoutMs,
     "upload"
@@ -156,8 +225,9 @@ async function measureUpload() {
 }
 
 export async function runClientSpeedTest() {
-  const [{ latencyMs, jitterMs }, { downloadMbps }, { uploadMbps }] =
-    await Promise.all([measureLatency(), measureDownload(), measureUpload()]);
+  const { latencyMs, jitterMs } = await measureLatency();
+  const { downloadMbps } = await measureDownload(10000);
+  const { uploadMbps } = await measureUpload();
 
   return {
     downloadSpeed: downloadMbps,

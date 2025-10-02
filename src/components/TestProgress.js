@@ -12,7 +12,7 @@ export default function TestProgress({
 }) {
   const normalizedTime = Math.max(
     0,
-    Math.min(100, ((45 - Math.max(0, remainingSeconds)) / 45) * 100)
+    Math.min(100, ((20 - Math.max(0, remainingSeconds)) / 20) * 100)
   );
 
   return (
