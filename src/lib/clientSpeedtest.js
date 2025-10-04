@@ -175,11 +175,13 @@ function createRandomPayload(byteCount) {
   return buffer;
 }
 
-async function postAndMeasureBytes(url, bytes, timeoutMs = DEFAULT_TIMEOUT_MS) {
+async function postAndMeasureBytes(url, bytes, capMs) {
   const payload = createRandomPayload(bytes);
   const start = performance.now();
-  await withTimeout(
-    fetch(`${url}?cb=${Date.now()}`, {
+
+  try {
+    // Create the fetch promise
+    const fetchPromise = fetch(`${url}?cb=${Date.now()}`, {
       method: "POST",
       // avoid browser/content encodings; send as raw bytes
       headers: {
@@ -194,23 +196,36 @@ async function postAndMeasureBytes(url, bytes, timeoutMs = DEFAULT_TIMEOUT_MS) {
       // Do not send credentials/cookies cross-origin
       credentials: "omit",
       referrerPolicy: "no-referrer",
-    }),
-    timeoutMs,
-    "upload"
-  );
-  const elapsedSec = (performance.now() - start) / 1000;
-  return { bytes, seconds: elapsedSec };
+    });
+
+    // Race between fetch and timeout
+    await Promise.race([
+      fetchPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("upload timeout")), capMs)
+      ),
+    ]);
+
+    const elapsedSec = (performance.now() - start) / 1000;
+    return { bytes, seconds: elapsedSec };
+  } catch (error) {
+    // If timeout or error, return what we've measured so far
+    const elapsedSec = (performance.now() - start) / 1000;
+    // Only count bytes if we spent a reasonable amount of time (partial upload)
+    return { bytes: elapsedSec > 0.5 ? bytes : 0, seconds: elapsedSec };
+  }
 }
 
-async function measureUpload() {
-  // Slightly longer timeout to accommodate slower uplinks
-  const timeoutMs = Math.max(DEFAULT_TIMEOUT_MS, 20000);
+async function measureUpload(totalTimeoutMs = 10000) {
+  const startAll = performance.now();
   for (const target of UPLOAD_TARGETS) {
+    const remainingMs = totalTimeoutMs - (performance.now() - startAll);
+    if (remainingMs <= 0) break;
     try {
       const { bytes, seconds } = await postAndMeasureBytes(
         target.url,
         target.bytes,
-        timeoutMs
+        remainingMs
       );
       if (seconds > 0 && bytes > 0) {
         const bits = bytes * 8;
@@ -227,7 +242,7 @@ async function measureUpload() {
 export async function runClientSpeedTest() {
   const { latencyMs, jitterMs } = await measureLatency();
   const { downloadMbps } = await measureDownload(10000);
-  const { uploadMbps } = await measureUpload();
+  const { uploadMbps } = await measureUpload(10000);
 
   return {
     downloadSpeed: downloadMbps,

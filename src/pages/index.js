@@ -132,9 +132,9 @@ export default function Home() {
     resultsRef.current = results;
   }, [results]);
 
-  // Handle showing results when they arrive and timer is done
+  // Handle showing results when timer is done
   useEffect(() => {
-    if (view === "testing" && results.length > 0 && remainingSeconds <= 0) {
+    if (view === "testing" && remainingSeconds <= 0) {
       setView("results");
       setRoomState((prev) => ({
         ...prev,
@@ -147,14 +147,7 @@ export default function Home() {
         status: "results",
       });
     }
-  }, [
-    view,
-    results.length,
-    remainingSeconds,
-    roomState.roomId,
-    roomState.userId,
-    username,
-  ]);
+  }, [view, remainingSeconds, roomState.roomId, roomState.userId, username]);
 
   // Start timer when view changes to testing
   useEffect(() => {
@@ -176,24 +169,9 @@ export default function Home() {
 
         setRemainingSeconds(secondsRemaining);
 
-        // When timer reaches zero, show results if we have them
+        // When timer reaches zero, stop the timer (view transition handled by useEffect)
         if (secondsRemaining <= 0) {
           clearProgressTimer();
-
-          // If we have results, show them
-          if (resultsRef.current.length > 0) {
-            setView("results");
-            setRoomState((prev) => ({
-              ...prev,
-              status: "results",
-            }));
-            saveSession({
-              roomId: roomState.roomId,
-              userId: roomState.userId,
-              username,
-              status: "results",
-            });
-          }
         }
       }, 1000);
     }
