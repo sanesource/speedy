@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server/index.mjs",
     "build": "next build --turbopack",
-    "start": "NODE_ENV=production node server/index.mjs",
+    "start": "NODE_ENV=production npm run build && node server/index.mjs",
     "lint": "eslint"
   },
   "dependencies": {
