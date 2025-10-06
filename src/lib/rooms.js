@@ -4,9 +4,9 @@ import { getDb } from "./mongodb.js";
 const ROOM_ID_LENGTH = 6;
 const MAX_CAPACITY = 8;
 
-const inMemoryRooms = global.__SPEEDY_ROOMS_STORE ?? new Map();
+const inMemoryRooms = global.__SPEEDRACE_ROOMS_STORE ?? new Map();
 if (process.env.NODE_ENV === "development") {
-  global.__SPEEDY_ROOMS_STORE = inMemoryRooms;
+  global.__SPEEDRACE_ROOMS_STORE = inMemoryRooms;
 }
 
 function cloneRoom(room) {

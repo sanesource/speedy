@@ -1,10 +1,10 @@
 import { MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "speedy";
+const dbName = process.env.MONGODB_DB || "speedrace";
 
-let cachedClient = global.__SPEEDY_MONGO_CLIENT ?? null;
-let cachedDb = global.__SPEEDY_MONGO_DB ?? null;
+let cachedClient = global.__SPEEDRACE_MONGO_CLIENT ?? null;
+let cachedDb = global.__SPEEDRACE_MONGO_DB ?? null;
 let connectionWarningLogged = false;
 
 export async function getMongoClient() {
@@ -27,7 +27,7 @@ export async function getMongoClient() {
     cachedClient = null;
     if (!connectionWarningLogged) {
       console.warn(
-        "[speedy] MongoDB connection failed. Falling back to in-memory storage.",
+        "[speedrace] MongoDB connection failed. Falling back to in-memory storage.",
         error.message
       );
       connectionWarningLogged = true;
@@ -36,7 +36,7 @@ export async function getMongoClient() {
   }
 
   if (process.env.NODE_ENV === "development") {
-    global.__SPEEDY_MONGO_CLIENT = cachedClient;
+    global.__SPEEDRACE_MONGO_CLIENT = cachedClient;
   }
 
   return cachedClient;
@@ -55,7 +55,7 @@ export async function getDb() {
   cachedDb = client.db(dbName);
 
   if (process.env.NODE_ENV === "development") {
-    global.__SPEEDY_MONGO_DB = cachedDb;
+    global.__SPEEDRACE_MONGO_DB = cachedDb;
   }
 
   return cachedDb;

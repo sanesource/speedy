@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Space_Mono } from "next/font/google";
 import {
   LandingView,
   RoomLobby,
@@ -10,14 +10,18 @@ import { getSocketClient } from "../lib/socketClient.js";
 import { clearSession, loadSession, saveSession } from "../lib/session.js";
 import { runClientSpeedTest } from "../lib/clientSpeedtest.js";
 
-const inter = Inter({
-  variable: "--font-inter",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
   subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const DEFAULT_PROGRESS = {
@@ -490,76 +494,122 @@ export default function Home() {
 
   return (
     <div
-      className={`${inter.className} ${jetbrainsMono.className} min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 p-6 font-sans dark:from-gray-950 dark:via-gray-900 dark:to-gray-950`}
+      className={`${plusJakartaSans.variable} ${spaceMono.variable} relative min-h-screen overflow-hidden font-sans`}
     >
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        {view === "landing" ? (
-          <LandingView
-            username={username}
-            onUsernameChange={setUsername}
-            roomCode={roomCode}
-            onRoomCodeChange={setRoomCode}
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
-            isJoinDisabled={!roomCode}
-            error={error}
-            isCreating={isCreating}
-            isJoining={isJoiningRoom}
-          />
-        ) : null}
+      {/* Background Pattern */}
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950" />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+      </div>
 
-        {view === "lobby" ? (
-          <RoomLobby
-            roomId={roomState.roomId}
-            adminId={roomState.adminId}
-            userId={roomState.userId}
-            participants={roomState.participants}
-            status={roomState.status}
-            capacity={roomState.maxCapacity}
-            onStartTest={handleStartTest}
-            onLeaveRoom={handleLeaveRoom}
-            isPersisted={isPersisted}
-            isStarting={isStarting}
-            isLeaving={isLeaving}
-          />
-        ) : null}
+      {/* Content */}
+      <div className="relative z-10 min-h-screen p-4 pb-20 sm:p-6 lg:p-8">
+        <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
+          {/* Logo/Header - Only show on landing page */}
+          {view === "landing" && (
+            <header className="animate-slideIn text-center">
+              <div className="inline-flex items-center gap-3 rounded-2xl bg-white/50 px-6 py-3 shadow-lg backdrop-blur-xl dark:bg-gray-900/50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-md">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="h-6 w-6 text-white"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+                  SpeedRace
+                </h1>
+              </div>
+            </header>
+          )}
 
-        {view === "testing" ? (
-          <TestProgress
-            participants={roomState.participants}
-            statusMessage="Collecting real-time metrics"
-            remainingSeconds={remainingSeconds}
-          />
-        ) : null}
+          {/* Main Views */}
+          <div className="animate-fadeIn">
+            {view === "landing" ? (
+              <LandingView
+                username={username}
+                onUsernameChange={setUsername}
+                roomCode={roomCode}
+                onRoomCodeChange={setRoomCode}
+                onCreateRoom={handleCreateRoom}
+                onJoinRoom={handleJoinRoom}
+                isJoinDisabled={!roomCode}
+                error={error}
+                isCreating={isCreating}
+                isJoining={isJoiningRoom}
+              />
+            ) : null}
 
-        {view === "results" ? (
-          <ResultsTable
-            results={results}
-            participants={roomState.participants}
-            maxDownload={maxDownload}
-            onRestart={handleRestart}
-            onExit={handleLeaveRoom}
-            isAdmin={roomState.userId === roomState.adminId}
-            isPersisted={isPersisted}
-            isRestarting={isRestarting}
-            isLeaving={isLeaving}
-          />
-        ) : null}
-      </main>
+            {view === "lobby" ? (
+              <RoomLobby
+                roomId={roomState.roomId}
+                adminId={roomState.adminId}
+                userId={roomState.userId}
+                participants={roomState.participants}
+                status={roomState.status}
+                capacity={roomState.maxCapacity}
+                onStartTest={handleStartTest}
+                onLeaveRoom={handleLeaveRoom}
+                isPersisted={isPersisted}
+                isStarting={isStarting}
+                isLeaving={isLeaving}
+              />
+            ) : null}
 
-      {/* Desktop: sidebar star button */}
+            {view === "testing" ? (
+              <TestProgress
+                participants={roomState.participants}
+                statusMessage="Collecting real-time metrics"
+                remainingSeconds={remainingSeconds}
+              />
+            ) : null}
+
+            {view === "results" ? (
+              <ResultsTable
+                results={results}
+                participants={roomState.participants}
+                maxDownload={maxDownload}
+                onRestart={handleRestart}
+                onExit={handleLeaveRoom}
+                isAdmin={roomState.userId === roomState.adminId}
+                isPersisted={isPersisted}
+                isRestarting={isRestarting}
+                isLeaving={isLeaving}
+              />
+            ) : null}
+          </div>
+        </main>
+      </div>
+
+      {/* Desktop: sidebar GitHub button */}
       <a
         href="https://github.com/sanesource/speedy"
         target="_blank"
         rel="noopener noreferrer"
-        className="group fixed right-4 top-1/2 hidden -translate-y-1/2 transform items-center gap-2 rounded-none bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800 md:flex"
-        aria-label="Star speedy on GitHub"
+        className="group fixed right-4 top-4 z-50 hidden items-center gap-2 rounded-xl border-2 border-gray-200 bg-white/90 px-4 py-2 text-sm font-bold text-gray-900 shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:border-gray-900 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-gray-500/30 dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-100 dark:hover:border-gray-600 md:flex"
+        aria-label="Star SpeedRace on GitHub"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="currentColor"
-          className="h-4 w-4"
+          className="h-5 w-5 text-amber-500 transition-transform group-hover:rotate-12"
           aria-hidden
         >
           <path d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.46 2.46a.75.75 0 0 0 .424.214l3.407.494a.75.75 0 0 1 .416 1.277l-2.463 2.4a.75.75 0 0 0-.216.664l.581 3.39a.75.75 0 0 1-1.088.791l-3.045-1.6a.75.75 0 0 0-.698 0l-3.045 1.6a.75.75 0 0 1-1.088-.79l.58-3.392a.75.75 0 0 0-.216-.663L4.272 7.944a.75.75 0 0 1 .416-1.277l3.407-.494a.75.75 0 0 0 .424-.214l2.96-2.46Z" />
@@ -567,16 +617,25 @@ export default function Home() {
         <span>Star on GitHub</span>
       </a>
 
-      {/* Mobile: footer star button */}
-      <div className="fixed inset-x-0 bottom-4 flex justify-center md:hidden">
+      {/* Mobile: bottom GitHub button */}
+      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 md:hidden">
         <a
           href="https://github.com/sanesource/speedy"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-none bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800"
-          aria-label="Star speedy on GitHub"
+          className="group flex items-center gap-2 rounded-full border-2 border-gray-200 bg-white/90 px-6 py-3 text-sm font-bold text-gray-900 shadow-2xl backdrop-blur-sm transition-all hover:scale-105 hover:border-gray-900 active:scale-95 dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-100"
+          aria-label="Star SpeedRace on GitHub"
         >
-          ⭐ Star on GitHub
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-5 w-5 text-amber-500 transition-transform group-hover:rotate-12"
+            aria-hidden
+          >
+            <path d="M11.48 3.499a.75.75 0 0 1 1.04 0l2.46 2.46a.75.75 0 0 0 .424.214l3.407.494a.75.75 0 0 1 .416 1.277l-2.463 2.4a.75.75 0 0 0-.216.664l.581 3.39a.75.75 0 0 1-1.088.791l-3.045-1.6a.75.75 0 0 0-.698 0l-3.045 1.6a.75.75 0 0 1-1.088-.79l.58-3.392a.75.75 0 0 0-.216-.663L4.272 7.944a.75.75 0 0 1 .416-1.277l3.407-.494a.75.75 0 0 0 .424-.214l2.96-2.46Z" />
+          </svg>
+          <span>Star on GitHub</span>
         </a>
       </div>
     </div>

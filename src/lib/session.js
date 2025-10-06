@@ -1,4 +1,4 @@
-const STORAGE_KEY = "speedy-session";
+const STORAGE_KEY = "speedrace-session";
 
 export function saveSession(data) {
   if (typeof window === "undefined") {

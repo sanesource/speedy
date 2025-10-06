@@ -48,7 +48,7 @@ export async function runServerSpeedTest() {
       testedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error("[speedy] Failed to run Ookla speed test", error);
+    console.error("[speedrace] Failed to run Ookla speed test", error);
     return {
       ...DEFAULT_RESULT,
       testedAt: new Date().toISOString(),

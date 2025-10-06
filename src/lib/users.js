@@ -1,9 +1,9 @@
 import crypto from "crypto";
 import { getDb } from "./mongodb.js";
 
-const inMemorySessions = global.__SPEEDY_SESSION_STORE ?? new Map();
+const inMemorySessions = global.__SPEEDRACE_SESSION_STORE ?? new Map();
 if (process.env.NODE_ENV === "development") {
-  global.__SPEEDY_SESSION_STORE = inMemorySessions;
+  global.__SPEEDRACE_SESSION_STORE = inMemorySessions;
 }
 
 export function generateUserId() {

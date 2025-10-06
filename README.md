@@ -1,6 +1,6 @@
-# Speedy
+# SpeedRace
 
-Speedy is a collaborative internet speed testing app where friends, teammates, and communities can jump into shared rooms, kick off simultaneous tests, and instantly compare network stats in real time.
+SpeedRace is a collaborative internet speed testing app where friends, teammates, and communities can jump into shared rooms, kick off simultaneous tests, and instantly compare network stats in real time.
 
 > **Vibe coded disclaimer:** the entire application is vibe coded—no line of code was manually written.
 
