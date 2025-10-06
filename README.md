@@ -4,9 +4,12 @@ Speedy is a collaborative internet speed testing app where friends, teammates, a
 
 > **Vibe coded disclaimer:** the entire application is vibe coded—no line of code was manually written.
 
-**Hosted Link**: https://speedy.sanesource.org/
+**Hosted Link**: https://speedrace.site/
 
-**Backup Link**: https://speedy-vexl.onrender.com/
+**Backup Link**:
+
+- https://speedy.sanesource.org/
+- https://speedy-vexl.onrender.com/
 
 ## What You Can Do
 
