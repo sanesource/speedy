@@ -165,7 +165,7 @@ export default function RoomLobby({
       {/* Main Content Grid */}
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
         {/* Control Panel */}
-        <section className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4 shadow-lg dark:border-gray-800 dark:from-gray-900 dark:to-gray-950 sm:p-6">
+        <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4 shadow-lg dark:border-gray-800 dark:from-gray-900 dark:to-gray-950 sm:p-6">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -192,7 +192,7 @@ export default function RoomLobby({
           </div>
 
           <div className="flex flex-col gap-3 rounded-lg bg-white p-4 dark:bg-gray-800/50">
-            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            <p className="break-words text-sm leading-relaxed text-gray-600 dark:text-gray-400">
               {isAdmin ? (
                 <>
                   You are the{" "}
@@ -221,7 +221,7 @@ export default function RoomLobby({
               disabled={!canStart || isStarting}
               aria-busy={isStarting}
               onClick={isStarting ? undefined : onStartTest}
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:hover:scale-100 dark:disabled:from-gray-700 dark:disabled:to-gray-800"
+              className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:hover:scale-100 dark:disabled:from-gray-700 dark:disabled:to-gray-800 sm:px-6 sm:py-4 sm:text-base"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative flex items-center justify-center gap-2">
@@ -235,7 +235,7 @@ export default function RoomLobby({
                       viewBox="0 0 24 24"
                       strokeWidth={2.5}
                       stroke="currentColor"
-                      className="h-5 w-5"
+                      className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5"
                     >
                       <path
                         strokeLinecap="round"
@@ -243,7 +243,7 @@ export default function RoomLobby({
                         d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
                       />
                     </svg>
-                    Start Speed Test
+                    <span className="whitespace-nowrap">Start Speed Test</span>
                   </>
                 )}
               </span>
@@ -265,7 +265,7 @@ export default function RoomLobby({
                     d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
                   />
                 </svg>
-                <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                <p className="break-words text-xs font-medium text-blue-700 dark:text-blue-300">
                   Only the admin can start the test
                 </p>
               </div>
@@ -276,7 +276,7 @@ export default function RoomLobby({
               onClick={isLeaving ? undefined : onLeaveRoom}
               disabled={isLeaving}
               aria-busy={isLeaving}
-              className="flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-white px-6 py-3 text-base font-bold text-red-600 transition-all hover:bg-red-50 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:border-red-200 disabled:bg-red-100 disabled:text-red-400 dark:border-red-800 dark:bg-gray-900 dark:text-red-400 dark:hover:bg-red-950"
+              className="flex items-center justify-center gap-2 rounded-xl border-2 border-red-300 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition-all hover:bg-red-50 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:border-red-200 disabled:bg-red-100 disabled:text-red-400 dark:border-red-800 dark:bg-gray-900 dark:text-red-400 dark:hover:bg-red-950 sm:px-6 sm:py-3 sm:text-base"
             >
               {isLeaving ? (
                 <LoadingIndicator label="Leaving..." />
@@ -288,7 +288,7 @@ export default function RoomLobby({
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="h-5 w-5"
+                    className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5"
                   >
                     <path
                       strokeLinecap="round"
@@ -296,7 +296,7 @@ export default function RoomLobby({
                       d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
                     />
                   </svg>
-                  Leave Room
+                  <span className="whitespace-nowrap">Leave Room</span>
                 </>
               )}
             </button>
@@ -304,7 +304,7 @@ export default function RoomLobby({
         </section>
 
         {/* Participants List */}
-        <section className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4 shadow-lg dark:border-gray-800 dark:from-gray-900 dark:to-gray-950 sm:p-6">
+        <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4 shadow-lg dark:border-gray-800 dark:from-gray-900 dark:to-gray-950 sm:p-6">
           <ParticipantList
             participants={participants}
             adminId={adminId}
